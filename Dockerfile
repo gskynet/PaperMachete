@@ -1,10 +1,9 @@
-FROM ubuntu:18.04
+FROM ubuntu:19.04
 
-ENV  JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
+ENV  JAVA_HOME /opt/jdk8
 RUN  apt update && DEBIAN_FRONTEND=noninteractive apt upgrade -y
 RUN  DEBIAN_FRONTEND=noninteractive apt install -y --fix-missing \
         curl \
-        openjdk-8-jre-headless \
         python-pip \
         python3-pip \
         unzip

@@ -15,7 +15,7 @@ class PaperMachete():
 
 class PMFunction(): 
     def __init__(self, func_name, asm_addr):
-        self.func_name = func_name
+        self.__name__ = func_name
         self.asm_addr = asm_addr
         self.basic_blocks = []
         self.bb_edges = []
@@ -114,7 +114,7 @@ def process_basic_block(func, block):
     bb_name = "bb_{}_{}_{}".format(block.start, block.end-1, func_name)
 
     for func in PM.functions:
-        if func.func_name == func_name:
+        if func.__name__ == func_name:
             func.basic_blocks.append(PMBasicBlock(bb_name, block.start, block.end))
 
 
@@ -255,7 +255,7 @@ def ast_build_json(args, name, il, level=0, edge=""):
         edge_label = str(edge)
 
         # constant
-        if isinstance(il, long):
+        if isinstance(il, int):
             node_type = "constant"
             constant_value = str(il)
 
@@ -301,7 +301,7 @@ def ast_build_json(args, name, il, level=0, edge=""):
 
         # Unknown terminating node (this should not be reached)
         else:
-            print "A terminating node was encountered that was not expected: '{}'".format(type(il))
+            print("A terminating node was encountered that was not expected: '{}'".format(type(il)))
             raise ValueError
 
 
@@ -316,7 +316,7 @@ def ast_parse(args):
     block = args[1]
     insn = args[2]
 
-    print "  function: {} (asm-addr: {})".format(func.name, hex(insn.address).strip('L'))
+    print("  function: {} (asm-addr: {})".format(func.name, hex(insn.address).strip('L')))
     lookup = defaultdict(lambda: defaultdict(list))
 
     for block in func.medium_level_il.ssa_form:
@@ -338,7 +338,7 @@ def process_edges(func):
                 source = "bb_{}_{}_{}".format(edge.source.start, edge.source.end-1, func_name)
                 target = "bb_{}_{}_{}".format(edge.target.start, edge.target.end-1, func_name)
                 for func in PM.functions:
-                    if func.func_name == func_name:
+                    if func.__name__ == func_name:
                         func.bb_edges.append(PMBBEdge(source, target))
 
 
@@ -467,15 +467,15 @@ def main(target, func_list=[]):
     PM = PaperMachete()
     
     if not isfile(target):
-        print "The specified target '{}' is not a file. Try again.".format(target)
+        print("The specified target '{}' is not a file. Try again.".format(target))
         return
 
-    print "Invoking Binary Ninja and analyzing file: {}".format(target)
+    print("Invoking Binary Ninja and analyzing file: {}".format(target))
     bv = binja.BinaryViewType.get_view_of_file(target)
     bv.add_analysis_option('linearsweep')
-    print "Performing linear sweep..."
+    print("Performing linear sweep...")
     bv.update_analysis_and_wait()
-    print "Linear sweep complete. Collecting BNIL data..."
+    print("Linear sweep complete. Collecting BNIL data...")
     analyze(bv, func_list)
     
     # pretty printed json (pretty printed files are much larger than compact files!)
@@ -493,7 +493,7 @@ def main(target, func_list=[]):
         jf.write(target_json)
         jf.close()
     except IOError:
-        print "ERROR: Unable to open/write to {}.json.".format(basename(target))
+        print("ERROR: Unable to open/write to {}.json.".format(basename(target)))
         return
 
 if __name__ == "__main__":
@@ -501,5 +501,5 @@ if __name__ == "__main__":
         target = sys.argv[1]
         func_list = sys.argv[2:]
     else:
-        print "Usage: %s <binary> [function1 function2 ...]" % sys.argv[0]
+        print("Usage: %s <binary> [function1 function2 ...]" % sys.argv[0])
     main(target, func_list)
