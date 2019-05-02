@@ -35,6 +35,6 @@ RUN  unzip /tmp/BinaryNinja.zip -d /opt/ && rm /tmp/BinaryNinja.zip && \
 COPY binaryninja/license.txt /root/.binaryninja/license.dat
 COPY binaryninja/update_to_version.py /opt/binaryninja/update_to_version.py
 
-ENTRYPOINT ["bash", "-c",  "grakn server start"]
+ENTRYPOINT ["bash"]
 
 # && cd /opt/papermachete && python3 paper_machete.py
