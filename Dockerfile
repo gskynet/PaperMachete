@@ -4,13 +4,19 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV JAVA_HOME       /usr/lib/jvm
 
 RUN  apt-get update && apt-get upgrade -y
-RUN  apt-get install -y software-properties-common apt-utils net-tools
+RUN  apt-get install -y software-properties-common apt-utils net-tools openssh-server
 RUN  apt-get install -y --fix-missing locales curl python3-pip unzip tmux vim
 # Set the locale
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
+
+# SSH
+RUN mkdir /var/run/sshd
+RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+ENV NOTVISIBLE "in users profile"
+RUN echo "export VISIBLE=now" >> /etc/profile
 
 # Java 8
 COPY binaryninja/jdk-8u211-linux-x64.tar.gz /tmp/jdk-8u211-linux-x64.tar.gz
@@ -35,6 +41,7 @@ RUN  unzip /tmp/BinaryNinja.zip -d /opt/ && rm /tmp/BinaryNinja.zip && \
 COPY binaryninja/license.txt /root/.binaryninja/license.dat
 COPY binaryninja/update_to_version.py /opt/binaryninja/update_to_version.py
 
-ENTRYPOINT ["bash"]
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]
 
 # && cd /opt/papermachete && python3 paper_machete.py
