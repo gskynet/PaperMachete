@@ -9,23 +9,27 @@ import binaryninja as binja
 PM = None
 vars_and_sizes = {}
 
+
 class PaperMachete():
     def __init__(self):
         self.functions = []
 
-class PMFunction(): 
+
+class PMFunction():
     def __init__(self, func_name, asm_addr):
         self.__name__ = func_name
         self.asm_addr = asm_addr
         self.basic_blocks = []
         self.bb_edges = []
 
+
 class PMBasicBlock():
     def __init__(self, bb_name, bb_start, bb_end):
         self.bb_name = bb_name
         self.bb_start = bb_start
-        self.bb_end = bb_end - 1 # set end as last il index (not +1 like binja gives us)
+        self.bb_end = bb_end - 1  # set end as last il index (not +1 like binja gives us)
         self.instructions = []
+
 
 class PMInstruction():
     def __init__(self, name, il_index, asm_address, operation_type, in_bb):
@@ -36,6 +40,7 @@ class PMInstruction():
         self.in_bb = in_bb
         self.nodes = []
 
+
 class PMOperation():
     def __init__(self, name, depth, node_type, edge_label, parent_hash):
         self.name = name
@@ -43,6 +48,7 @@ class PMOperation():
         self.node_type = node_type
         self.edge_label = edge_label
         self.parent_hash = parent_hash
+
 
 class PMNodeList():
     def __init__(self, name, depth, node_type, edge_label, parent_hash, list_size):
@@ -53,6 +59,7 @@ class PMNodeList():
         self.parent_hash = parent_hash
         self.list_size = list_size
 
+
 class PMEndNodeConstant():
     def __init__(self, name, depth, node_type, edge_label, parent_hash, constant_value):
         self.name = name
@@ -61,6 +68,7 @@ class PMEndNodeConstant():
         self.edge_label = edge_label
         self.parent_hash = parent_hash
         self.constant_value = constant_value
+
 
 class PMEndNodeVarSSA():
     def __init__(self, name, depth, node_type, edge_label, parent_hash, var, version, var_type, var_size, var_func):
@@ -75,6 +83,7 @@ class PMEndNodeVarSSA():
         self.var_size = var_size
         self.var_func = var_func
 
+
 class PMEndNodeVariable():
     def __init__(self, name, depth, node_type, edge_label, parent_hash, var, var_type, var_size, var_func):
         self.name = name
@@ -86,6 +95,7 @@ class PMEndNodeVariable():
         self.var_type = var_type
         self.var_size = var_size
         self.var_func = var_func
+
 
 class PMBBEdge():
     def __init__(self, source, target):
@@ -111,7 +121,7 @@ def process_function(func):
 
 def process_basic_block(func, block):
     func_name = func.name.replace('.', '_')
-    bb_name = "bb_{}_{}_{}".format(block.start, block.end-1, func_name)
+    bb_name = "bb_{}_{}_{}".format(block.start, block.end - 1, func_name)
 
     for func in PM.functions:
         if func.__name__ == func_name:
@@ -131,7 +141,7 @@ def process_instruction(func, block, insn):
     # To complicate this more, MLIL_GOTO operations always seem to have
     # address => 0x0. So we have to process 0x0 addresses multiple times until
     # this behavior changes in Binary Ninja (this may actually be expected).
-    
+
     if (insn.address not in insn_list) or (insn.address == 0x0):
         ast_parse([func, block, insn])
         insn_list.append(insn.address)
@@ -140,7 +150,7 @@ def process_instruction(func, block, insn):
     # This is extremely important for Grakn's migration template
     # since nodes at depth 1 need to exist before nodes at depth
     # 2 can be linked to them (and so on).
-    
+
     for func in PM.functions:
         for bb in func.basic_blocks:
             for inst in bb.instructions:
@@ -151,9 +161,9 @@ def ast_build_json(args, name, il, level=0, edge=""):
     global insn_list
     global vars_and_sizes
 
-    func  = args[0]
+    func = args[0]
     block = args[1]
-    insn  = args[2]
+    insn = args[2]
 
     func_name = func.name.replace('.', '_')
 
@@ -167,7 +177,7 @@ def ast_build_json(args, name, il, level=0, edge=""):
     depth = name.count("_") - 2
     if 'L' in parent:
         parent_type = "list"
-        name = name.replace('L', 'N') # reset node status
+        name = name.replace('L', 'N')  # reset node status
     elif parent.count("_") == 2:
         parent_type = "instruction"
     else:
@@ -177,13 +187,13 @@ def ast_build_json(args, name, il, level=0, edge=""):
     inst_hash = "_".join(name.split('_')[:3])
 
     # get the basic-block this node belongs in
-    inbb = "bb_{}_{}_{}".format(block.start, block.end-1, func_name)
+    inbb = "bb_{}_{}_{}".format(block.start, block.end - 1, func_name)
 
     if isinstance(il, binja.MediumLevelILInstruction):
 
         # instruction
         if level == 0:
-            il_index =  il.instr_index
+            il_index = il.instr_index
             asm_address = hex(il.address).strip('L')
             operation_type = str(il.operation).split('.')[1]
 
@@ -200,9 +210,10 @@ def ast_build_json(args, name, il, level=0, edge=""):
                                 if (inst_hash not in insn_list):
                                     insn_list.append(inst_hash)
                                 else:
-                                    continue # don't add this again!
-                            bb.instructions.append(PMInstruction(inst_hash, il_index, asm_address, operation_type, inbb))
-                            
+                                    continue  # don't add this again!
+                            bb.instructions.append(
+                                PMInstruction(inst_hash, il_index, asm_address, operation_type, inbb))
+
         # operation
         else:
             node_type = str(il.operation).split('.')[1]
@@ -214,7 +225,7 @@ def ast_build_json(args, name, il, level=0, edge=""):
                     for inst in bb.instructions:
                         if inst.name == inst_hash:
                             inst.nodes.append(PMOperation(name, depth, node_type, edge_label, parent_hash))
-                            
+
         # edge
         for i, o in enumerate(il.operands):
             try:
@@ -225,15 +236,15 @@ def ast_build_json(args, name, il, level=0, edge=""):
                 # See: https://github.com/Vector35/binaryninja-api/issues/787 
                 edge_label = "unimplemented"
             child_name = "{}_{}".format(name, i)
-            ast_build_json(args, child_name, o, level+1, edge_label)
-            
+            ast_build_json(args, child_name, o, level + 1, edge_label)
+
 
     # list of operands / nodes
     elif isinstance(il, list):
         node_type = "list"
         edge_label = str(edge)
         parent_hash = parent
-        name = name.replace('N', 'L') # list hashes have an 'L' prefix to distinguish from nodes ('N').
+        name = name.replace('N', 'L')  # list hashes have an 'L' prefix to distinguish from nodes ('N').
         list_size = len(il)
 
         for func in PM.functions:
@@ -241,14 +252,13 @@ def ast_build_json(args, name, il, level=0, edge=""):
                 for inst in bb.instructions:
                     if inst.name == inst_hash:
                         inst.nodes.append(PMNodeList(name, depth, node_type, edge_label, parent_hash, list_size))
-                        
 
         # add elements from 
         for i, item in enumerate(il):
             edge_label = str(i)
             item_name = "{}_{}".format(name, i)
-            ast_build_json(args, item_name, item, level+1, edge_label)
-            
+            ast_build_json(args, item_name, item, level + 1, edge_label)
+
     # end node
     else:
         parent_hash = parent
@@ -263,7 +273,8 @@ def ast_build_json(args, name, il, level=0, edge=""):
                 for bb in func.basic_blocks:
                     for inst in bb.instructions:
                         if inst.name == inst_hash:
-                            inst.nodes.append(PMEndNodeConstant(name, depth, node_type, edge_label, parent_hash, constant_value))
+                            inst.nodes.append(
+                                PMEndNodeConstant(name, depth, node_type, edge_label, parent_hash, constant_value))
 
 
         # SSAVariable (not using type information)
@@ -273,14 +284,16 @@ def ast_build_json(args, name, il, level=0, edge=""):
             version = il.version
 
             var_type = str(il.var.type)
-            var_size = vars_and_sizes.get(str(il.var), 4) 
+            var_size = vars_and_sizes.get(str(il.var), 4)
             var_func = func_name
 
             for func in PM.functions:
                 for bb in func.basic_blocks:
                     for inst in bb.instructions:
                         if inst.name == inst_hash:
-                            inst.nodes.append(PMEndNodeVarSSA(name, depth, node_type, edge_label, parent_hash, var, version, var_type, var_size, var_func))
+                            inst.nodes.append(
+                                PMEndNodeVarSSA(name, depth, node_type, edge_label, parent_hash, var, version, var_type,
+                                                var_size, var_func))
 
 
         # Variable (contains more information than we currently use)
@@ -289,14 +302,16 @@ def ast_build_json(args, name, il, level=0, edge=""):
             var = str(il)
 
             var_type = str(il.type)
-            var_size = vars_and_sizes.get(str(il), 4) 
+            var_size = vars_and_sizes.get(str(il), 4)
             var_func = func_name
 
             for func in PM.functions:
                 for bb in func.basic_blocks:
                     for inst in bb.instructions:
                         if inst.name == inst_hash:
-                            inst.nodes.append(PMEndNodeVariable(name, depth, node_type, edge_label, parent_hash, var, var_type, var_size, var_func))
+                            inst.nodes.append(
+                                PMEndNodeVariable(name, depth, node_type, edge_label, parent_hash, var, var_type,
+                                                  var_size, var_func))
 
 
         # Unknown terminating node (this should not be reached)
@@ -335,8 +350,8 @@ def process_edges(func):
     for block in func.medium_level_il.ssa_form:
         if len(block.outgoing_edges) > 0:
             for edge in block.outgoing_edges:
-                source = "bb_{}_{}_{}".format(edge.source.start, edge.source.end-1, func_name)
-                target = "bb_{}_{}_{}".format(edge.target.start, edge.target.end-1, func_name)
+                source = "bb_{}_{}_{}".format(edge.source.start, edge.source.end - 1, func_name)
+                target = "bb_{}_{}_{}".format(edge.target.start, edge.target.end - 1, func_name)
                 for func in PM.functions:
                     if func.__name__ == func_name:
                         func.bb_edges.append(PMBBEdge(source, target))
@@ -349,10 +364,10 @@ def get_offset_from_var(var):
         e.g. var_90, __saved_edi --> 144, -1
     """
     instance = False
-    i=0
+    i = 0
 
     # Parse string
-    i = var.rfind(' ')+1
+    i = var.rfind(' ') + 1
     tmp = var[i:-1]
 
     # Parse var
@@ -367,7 +382,7 @@ def get_offset_from_var(var):
         else:
             instance = False
 
-    try:    
+    try:
         tmp = int(tmp, 16)
     except:
         tmp = -1
@@ -375,8 +390,8 @@ def get_offset_from_var(var):
     # -1 for non vars
     else:
         tmp = -1
-    
-    return tmp, instance 
+
+    return tmp, instance
 
 
 def get_variable_sizes(stack):
@@ -387,58 +402,57 @@ def get_variable_sizes(stack):
     prev_offset = 0
     offset = 0
     counter = 0
-    i=0
+    i = 0
     var_dict = {}
     str_list = list(reversed(stack[1:-1].split(', ')))
 
     # Loop through each item on stack backwards
     for item in str_list:
-        size=0
-        tmp=0
+        size = 0
+        tmp = 0
         instance = False
 
         # Handle args and return addr
         if (('arg' in item) or ('return' in item)):
             size = 4
 
-        elif('int32' in item):
+        elif ('int32' in item):
             size = 4
             tmp, instance = get_offset_from_var(str_list[counter])
             if tmp != -1:
                 offset = tmp
             if not instance:
-                offset = prev_offset+4
+                offset = prev_offset + 4
 
         elif ('int64' in item):
             size = 8
             tmp, instance = get_offset_from_var(str_list[counter])
             if not instance:
-                offset = prev_offset+8
+                offset = prev_offset + 8
             if tmp != -1:
                 offset = tmp
 
         else:
             offset, instance = get_offset_from_var(str_list[counter])
             if instance:
-                offset = offset-4
+                offset = offset - 4
 
-        if size == 0:  
-            size = offset-prev_offset
-        if (not instance):   
+        if size == 0:
+            size = offset - prev_offset
+        if (not instance):
             prev_offset = offset
 
         # Parse string
-        i = item.rfind(' ')+1
+        i = item.rfind(' ') + 1
         key = item[i:-1]
-        
-        var_dict.update({key:size})
-        counter = counter+1
+
+        var_dict.update({key: size})
+        counter = counter + 1
 
     return var_dict
 
 
 def analyze(bv, func_list=[]):
-
     list_len = len(func_list)
 
     ## process functions
@@ -465,7 +479,7 @@ def main(target, func_list=[]):
     global PM
 
     PM = PaperMachete()
-    
+
     if not isfile(target):
         print("The specified target '{}' is not a file. Try again.".format(target))
         return
@@ -477,13 +491,13 @@ def main(target, func_list=[]):
     bv.update_analysis_and_wait()
     print("Linear sweep complete. Collecting BNIL data...")
     analyze(bv, func_list)
-    
+
     # pretty printed json (pretty printed files are much larger than compact files!)
     target_json = json.dumps(PM, default=lambda o: o.__dict__, indent=4, sort_keys=True)
-    
+
     # compact / minified json
-    #target_json = json.dumps(PM, default=lambda o: o.__dict__)
-    
+    # target_json = json.dumps(PM, default=lambda o: o.__dict__)
+
     try:
         jf = None
         if __name__ == "__main__":
@@ -495,6 +509,7 @@ def main(target, func_list=[]):
     except IOError:
         print("ERROR: Unable to open/write to {}.json.".format(basename(target)))
         return
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
