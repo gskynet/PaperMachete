@@ -1,5 +1,8 @@
 *.pyc
+
 .DS_Store
 
-binaryninja/BinaryNinja.zip
-binaryninja/license.txt
+binaryninja/*.gz
+binaryninja/*.txt
+binaryninja/*.zip
+
