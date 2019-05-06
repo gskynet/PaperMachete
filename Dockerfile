@@ -6,6 +6,22 @@ ENV JAVA_HOME       /usr/lib/jvm
 RUN  apt-get update && apt-get upgrade -y
 RUN  apt-get install -y software-properties-common apt-utils net-tools openssh-server
 RUN  apt-get install -y --fix-missing locales curl python3-pip unzip tmux vim
+RUN  apt-get install -y \
+        dbus \
+        dbus-x11 \
+        xorg \
+        xserver-xorg-legacy \
+        xinit \
+        xterm \
+        usbutils \
+        pciutils \
+        automake \
+        gcc \
+        g++ \
+        git \
+        unzip \
+        bzip2 \
+        git
 # Set the locale
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
 ENV LANG en_US.UTF-8
