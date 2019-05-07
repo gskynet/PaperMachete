@@ -49,7 +49,12 @@ RUN echo "export VISIBLE=now" >> /etc/profile
 # NOMACHINE
 RUN curl -fL "http://download.nomachine.com/download/6.6/Linux/${NOMACHINE_PACKAGE_NAME}" -o /root/nomachine.deb
 RUN echo "${NOMACHINE_MD5}  /root/nomachine.deb" | md5sum -c - \
-    && dpkg -i /root/nomachine.deb
+    && dpkg -i /root/nomachine.deb \
+    && groupadd -r nomachine -g 433 \
+    && useradd -u 431 -r -g nomachine -d /home/nomachine -s /bin/bash -c "NoMachine" nomachine \
+    && mkdir /home/nomachine \
+    && chown -R nomachine:nomachine /home/nomachine \
+    && echo 'nomachine:nomachine' | chpasswd
 
 # Java 8
 COPY binaryninja/jdk-8u211-linux-x64.tar.gz /tmp/jdk-8u211-linux-x64.tar.gz
