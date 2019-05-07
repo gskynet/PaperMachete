@@ -72,5 +72,5 @@ Now that you have data in Grakn, you can use option `[3]`. This will kick off al
     
     docker exec -it bj /bin/bash 
     
-    https://blog.yadutaf.fr/2017/09/10/running-a-graphical-app-in-a-docker-container-on-a-remote-server/
+    https://gist.github.com/udkyo/c20935c7577c71d634f0090ef6fa8393
 ```
