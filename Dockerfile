@@ -1,11 +1,14 @@
 FROM ubuntu:19.04
+# use nomachine instead of SSH X11 forwarding
+ENV NOMACHINE_PACKAGE_NAME nomachine_6.6.8_5_amd64.deb
+ENV NOMACHINE_MD5 3e814508c064b7096af51394dd5e2732
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV JAVA_HOME       /usr/lib/jvm
 
 RUN  apt-get update && apt-get upgrade -y
 RUN  apt-get install -y software-properties-common apt-utils net-tools openssh-server
-RUN  apt-get install -y --fix-missing locales curl python3-pip unzip tmux vim
+RUN  apt-get install -y --fix-missing locales curl pulseaudio cups python3-pip unzip tmux vim
 RUN  apt-get install -y \
         automake \
         gcc \
@@ -15,7 +18,6 @@ RUN  apt-get install -y \
         bzip2 \
         git \
         xauth \
-        firefox \
         libgl1
 
 # Set the locale
@@ -23,6 +25,9 @@ RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && loca
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
+
+RUN apt-get install -y mate-desktop-environment-core
+
 
 # SSH
 RUN mkdir /var/run/sshd &&\
@@ -39,6 +44,11 @@ RUN mkdir /var/run/sshd &&\
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 ENV NOTVISIBLE "in users profile"
 RUN echo "export VISIBLE=now" >> /etc/profile
+
+# NOMACHINE
+RUN curl -fL "http://download.nomachine.com/download/6.6/Linux/${NOMACHINE_PACKAGE_NAME}" -o /root/nomachine.deb
+RUN echo "${NOMACHINE_MD5}  /root/nomachine.deb" | md5sum -c - \
+    && dpkg -i /root/nomachine.deb
 
 # Java 8
 COPY binaryninja/jdk-8u211-linux-x64.tar.gz /tmp/jdk-8u211-linux-x64.tar.gz
@@ -66,4 +76,6 @@ COPY binaryninja/update_to_version.py /opt/binaryninja/update_to_version.py
 EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D"]
 
-# && cd /opt/papermachete && python3 paper_machete.py
+# cd /opt/papermachete && python3 paper_machete.py
+
+# /etc/NX/nxserver --startup

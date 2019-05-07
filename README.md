@@ -68,7 +68,7 @@ Now that you have data in Grakn, you can use option `[3]`. This will kick off al
     
     docker save bj_image | bzip2 | pv | ssh root@xxx 'bunzip2 | docker load'
     
-    docker run -p xxxx:22 --name bj -it bj_image
+    docker run -p xxxx:4000 -p xxxx:22 --name bj -it bj_image
     
     docker exec -it bj /bin/bash 
     
