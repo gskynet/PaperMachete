@@ -26,7 +26,8 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
-RUN apt-get install -y mate-desktop-environment-core
+RUN apt-get install -y xfce4 &&\
+    apt-get autoremove
 
 
 # SSH
@@ -73,8 +74,11 @@ RUN  unzip /tmp/BinaryNinja.zip -d /opt/ && rm /tmp/BinaryNinja.zip && \
 COPY binaryninja/license.txt /root/.binaryninja/license.dat
 COPY binaryninja/update_to_version.py /opt/binaryninja/update_to_version.py
 
-EXPOSE 22
-CMD ["/usr/sbin/sshd", "-D"]
+ADD nxserver.sh /
+
+EXPOSE 22 4000
+#CMD ["/usr/sbin/sshd", "-D"]
+ENTRYPOINT ["/nxserver.sh"]
 
 # cd /opt/papermachete && python3 paper_machete.py
 
