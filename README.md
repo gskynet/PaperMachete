@@ -64,7 +64,13 @@ Now that you have data in Grakn, you can use option `[3]`. This will kick off al
 ## Copy docker to another host
 
 ```text
-    sudo docker build -t bj_image .
+    docker build -t bj_image .
     
-    sudo docker save bj_image | bzip2 | pv | ssh root@xxx 'bunzip2 | docker load'
+    docker save bj_image | bzip2 | pv | ssh root@xxx 'bunzip2 | docker load'
+    
+    docker run -p xxxx:22 --name bj -it bj_image
+    
+    docker exec -it bj /bin/bash 
+    
+    https://blog.yadutaf.fr/2017/09/10/running-a-graphical-app-in-a-docker-container-on-a-remote-server/
 ```

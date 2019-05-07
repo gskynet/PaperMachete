@@ -7,21 +7,17 @@ RUN  apt-get update && apt-get upgrade -y
 RUN  apt-get install -y software-properties-common apt-utils net-tools openssh-server
 RUN  apt-get install -y --fix-missing locales curl python3-pip unzip tmux vim
 RUN  apt-get install -y \
-        dbus \
-        dbus-x11 \
-        xorg \
-        xserver-xorg-legacy \
-        xinit \
-        xterm \
-        usbutils \
-        pciutils \
         automake \
         gcc \
         g++ \
         git \
         unzip \
         bzip2 \
-        git
+        git \
+        xauth \
+        firefox \
+        libgl1
+
 # Set the locale
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
 ENV LANG en_US.UTF-8
@@ -29,7 +25,17 @@ ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
 # SSH
-RUN mkdir /var/run/sshd
+RUN mkdir /var/run/sshd &&\
+    mkdir /root/.ssh &&\
+    chmod 700 /root/.ssh &&\
+    ssh-keygen -A &&\
+    sed -i "s/^.*PasswordAuthentication.*$/PasswordAuthentication no/" /etc/ssh/sshd_config &&\
+    sed -i "s/^.*X11Forwarding.*$/X11Forwarding yes/" /etc/ssh/sshd_config &&\
+    sed -i "s/^.*X11UseLocalhost.*$/X11UseLocalhost no/" /etc/ssh/sshd_config &&\
+    grep "^X11UseLocalhost" /etc/ssh/sshd_config || echo "X11UseLocalhost no" >> /etc/ssh/sshd_config
+
+#RUN echo "YOUR_PUB_KEY_HERE" >> /root/.ssh/authorized_keys
+
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 ENV NOTVISIBLE "in users profile"
 RUN echo "export VISIBLE=now" >> /etc/profile
