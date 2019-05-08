@@ -68,9 +68,13 @@ Now that you have data in Grakn, you can use option `[3]`. This will kick off al
     
     docker save bj_image | bzip2 | pv | ssh root@xxx 'bunzip2 | docker load'
     
-    docker run -p xxxx:4000 -p xxxx:22 --name bj -it bj_image
+    docker run -p 40000:4000 -p 10022:22 --name bj -e PASSWORD=password -e USER=user --cap-add=SYS_PTRACE -it bj_image
     
     docker exec -it bj /bin/bash 
     
+    cp key to .ssh/authorized_keys2 and .ssh/authorized_keys
+    
     https://gist.github.com/udkyo/c20935c7577c71d634f0090ef6fa8393
+    
+    Should install mate-desktop-environment after start containter
 ```
